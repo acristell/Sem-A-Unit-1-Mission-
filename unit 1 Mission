@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 1 Review Lab</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --board: #1F3A34;
+    --board-dark: #172E29;
+    --paper: #F6F1E4;
+    --paper-line: #E4DCC6;
+    --ink: #20242C;
+    --chalk-yellow: #F4D35E;
+    --chalk-pink: #F2789F;
+    --chalk-blue: #7FC1D9;
+    --chalk-white: #F5F1E8;
+    --good: #4EAE8C;
+    --bad: #E0644F;
+    --shadow: rgba(0,0,0,0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--board);
+    color: var(--chalk-white);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.03) 0, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(255,255,255,0.03) 0, transparent 40%);
+  }
+
+  h1, h2, h3, .hand {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+  }
+
+  #app { max-width: 920px; margin: 0 auto; padding: 20px 18px 60px; }
+
+  .board-header { text-align: center; padding: 18px 0 6px; }
+  .board-header h1 {
+    font-size: 3rem;
+    margin: 0;
+    color: var(--chalk-white);
+    text-shadow: 0 0 1px rgba(255,255,255,0.4);
+  }
+  .board-header p {
+    color: var(--chalk-blue);
+    font-size: 1.05rem;
+    margin: 4px 0 0;
+  }
+  .underline-scribble {
+    width: 220px; height: 10px; margin: 4px auto 0;
+    border-bottom: 3px solid var(--chalk-yellow);
+    border-radius: 50%;
+    opacity: .7;
+  }
+
+  main { display: none; }
+  main.active { display: block; animation: fadein .35s ease; }
+  @keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* HOME GRID */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .activity-card {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 22px 20px;
+    cursor: pointer;
+    border: none;
+    text-align: left;
+    box-shadow: 0 6px 0 var(--board-dark), 0 10px 18px var(--shadow);
+    transition: transform .15s ease, box-shadow .15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .activity-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 var(--board-dark), 0 14px 22px var(--shadow); }
+  .activity-card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--board-dark); }
+  .activity-card .icon { width: 46px; height: 46px; margin-bottom: 10px; }
+  .activity-card h2 { font-size: 1.7rem; margin: 0 0 6px; }
+  .activity-card p { margin: 0; font-size: 0.92rem; line-height: 1.4; color: #4B5259; }
+  .activity-card .tag {
+    display: inline-block; margin-top: 10px; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.02em; padding: 3px 9px; border-radius: 20px; color: #fff;
+  }
+  .tag.quiz{ background: var(--chalk-pink); }
+  .tag.sort{ background: var(--good); }
+  .tag.blitz{ background: var(--bad); }
+  .tag.cards{ background: #5C8CE0; }
+  .tag.ph{ background: #4396B3; }
+  .tag.mix{ background: #9163C7; }
+  .tag.metals{ background: #C98A1F; }
+
+  .classify-card {
+    background: #fff; border: 2px solid #E9E2CD; border-radius: 14px;
+    padding: 26px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .classify-label { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+  .classify-emoji { font-size: 4rem; line-height: 1; margin-bottom: 10px; }
+  .classify-clue { font-size: 0.95rem; color: #666; font-style: italic; }
+  .cat-row { display:flex; gap: 12px; flex-wrap: wrap; }
+  .cat-row .choice-btn { flex: 1; min-width: 110px; text-align:center; font-weight: 700; }
+
+  .back-btn {
+    background: none; border: 2px solid var(--chalk-white); color: var(--chalk-white);
+    padding: 7px 16px; border-radius: 20px; font-family:'Inter'; font-weight:600; font-size:0.85rem;
+    cursor: pointer; margin-bottom: 14px;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .panel {
+    background: var(--paper); color: var(--ink);
+    border-radius: 16px; padding: 26px 24px; box-shadow: 0 10px 26px var(--shadow);
+  }
+
+  .progress-row { display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; font-size: 0.85rem; color:#555; }
+  .score-pill { background: var(--board); color: var(--chalk-white); padding: 4px 12px; border-radius: 20px; font-weight:700; }
+
+  /* QUIZ */
+  #quiz-question { font-size: 1.35rem; line-height:1.4; margin: 6px 0 20px; }
+  .choice-list { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    text-align: left; background: #fff; border: 2px solid #DCD5C0; border-radius: 10px;
+    padding: 13px 16px; font-size: 1rem; cursor: pointer; font-family: 'Inter';
+    color: var(--ink); transition: all .12s ease;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--chalk-blue); background: #F0F8FB; }
+  .choice-btn.correct { background: #DFF3E9; border-color: var(--good); font-weight: 700; }
+  .choice-btn.incorrect { background: #FBE4E0; border-color: var(--bad); }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; display:none; }
+  .feedback.show { display: block; }
+  .feedback.good { background: #DFF3E9; color: #205F45; }
+  .feedback.bad { background: #FBE4E0; color: #7A2E20; }
+
+  .next-btn, .primary-btn {
+    margin-top: 18px; background: var(--board); color: var(--chalk-white); border:none;
+    padding: 11px 22px; border-radius: 24px; font-weight: 700; font-size: 0.95rem; cursor:pointer;
+    font-family:'Inter'; display:none;
+  }
+  .next-btn.show { display:inline-block; }
+  .primary-btn.show { display:inline-block; }
+  .next-btn:hover, .primary-btn:hover { background: var(--board-dark); }
+
+  .end-screen { text-align: center; padding: 20px 0; }
+  .end-screen .hand { font-size: 2.4rem; color: var(--board); }
+
+  /* SORT */
+  .bins { display:flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .bin {
+    flex: 1; min-width: 140px; min-height: 130px; border-radius: 12px; border: 3px dashed #C9C0A6;
+    padding: 10px; text-align:center; transition: all .15s ease;
+  }
+  .bin h3 { margin: 2px 0 8px; font-size: 1.4rem; }
+  .bin.element { background: #FDF2DF; }
+  .bin.compound { background: #E4F0FB; }
+  .bin.mixture { background: #EAF6EE; }
+  .bin.target-hover { border-style: solid; transform: scale(1.02); }
+  .bin-items { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height: 30px; }
+  .bin-chip { background: rgba(255,255,255,0.7); border-radius: 8px; padding: 3px 8px; font-size: 0.75rem; }
+
+  .item-tray { display:flex; flex-wrap:wrap; gap: 10px; justify-content:center; margin-top: 6px; }
+  .sort-item {
+    background: #fff; border: 2px solid #DCD5C0; border-radius: 10px; padding: 10px 14px;
+    font-size: 0.92rem; cursor: pointer; font-family:'Inter'; font-weight:600;
+  }
+  .sort-item.selected { border-color: var(--chalk-pink); background: #FCEBF1; }
+  .sort-item.placed { display:none; }
+
+  .hint-text { font-size:0.85rem; color:#666; text-align:center; margin-top: 4px;}
+
+  /* BLITZ */
+  .blitz-bar-wrap { background:#E5DEC9; border-radius: 20px; height: 10px; overflow:hidden; margin-bottom: 20px;}
+  .blitz-bar { background: var(--chalk-pink); height:100%; width:100%; transition: width .1s linear; }
+  #blitz-statement { font-size: 1.4rem; text-align:center; margin: 18px 0 26px; line-height:1.4; min-height: 90px; display:flex; align-items:center; justify-content:center;}
+  .tf-buttons { display:flex; gap: 14px; justify-content:center; }
+  .tf-btn {
+    flex:1; max-width: 200px; padding: 18px; border-radius: 12px; border: none; font-size: 1.2rem;
+    font-weight:800; cursor:pointer; font-family:'Inter'; color:#fff;
+  }
+  .tf-btn.true-btn { background: var(--good); }
+  .tf-btn.false-btn { background: var(--bad); }
+  .tf-btn:disabled { opacity: 0.5; }
+
+  /* FLASHCARDS */
+  .flash-wrap { display:flex; flex-direction:column; align-items:center; }
+  .flashcard {
+    width: 100%; max-width: 480px; height: 260px; perspective: 1200px; cursor: pointer; margin-bottom: 18px;
+  }
+  .flashcard-inner {
+    position: relative; width:100%; height:100%; transition: transform .5s; transform-style: preserve-3d;
+  }
+  .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+  .flashcard-face {
+    position:absolute; inset:0; backface-visibility:hidden; border-radius:16px;
+    display:flex; align-items:center; justify-content:center; text-align:center; padding: 26px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+  }
+  .flashcard-front { background: #fff; }
+  .flashcard-front .hand { font-size: 2.4rem; color: var(--board); }
+  .flashcard-back { background: var(--board); color: var(--chalk-white); transform: rotateY(180deg); font-size: 1.05rem; line-height:1.45; }
+  .flash-controls { display:flex; gap: 12px; align-items:center; }
+  .flash-controls button {
+    background: var(--paper-line); border:none; padding: 10px 18px; border-radius: 20px; cursor:pointer;
+    font-family:'Inter'; font-weight:700; color: var(--ink);
+  }
+  .flash-counter { font-size: 0.85rem; color: #555; margin-top: 8px; }
+
+  @media (max-width: 520px) {
+    .board-header h1 { font-size: 2.3rem; }
+    .bins { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="board-header">
+    <h1>🧪 Unit 1 Review Lab</h1>
+    <p>Matter, Properties &amp; Changes — pick a way to practice</p>
+    <div class="underline-scribble"></div>
+  </header>
+
+  <main id="home-screen" class="active">
+    <div class="card-grid">
+      <button class="activity-card" onclick="goTo('quiz')">
+        <svg class="icon" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="#F2789F" stroke-width="3"/><path d="M17 20 Q24 10 31 20" fill="none" stroke="#F2789F" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="33" r="2.2" fill="#F2789F"/></svg>
+        <h2>Quiz Show</h2>
+        <p>One question at a time. Answer, get instant feedback, build a streak.</p>
+        <span class="tag quiz">17 questions</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('sort')">
+        <svg class="icon" viewBox="0 0 48 48"><rect x="6" y="26" width="12" height="14" rx="2" fill="none" stroke="#4EAE8C" stroke-width="3"/><rect x="18" y="18" width="12" height="22" rx="2" fill="none" stroke="#4EAE8C" stroke-width="3"/><rect x="30" y="10" width="12" height="30" rx="2" fill="none" stroke="#4EAE8C" stroke-width="3"/></svg>
+        <h2>Sort Lab</h2>
+        <p>Classify each substance as an element, compound, or mixture.</p>
+        <span class="tag sort">8 items</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('blitz')">
+        <svg class="icon" viewBox="0 0 48 48"><circle cx="24" cy="26" r="16" fill="none" stroke="#E0644F" stroke-width="3"/><path d="M24 16v10l7 5" stroke="#E0644F" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M18 6h12" stroke="#E0644F" stroke-width="3" stroke-linecap="round"/></svg>
+        <h2>True or False Blitz</h2>
+        <p>Fast rounds — read the statement, answer before time runs out.</p>
+        <span class="tag blitz">16 statements</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('cards')">
+        <svg class="icon" viewBox="0 0 48 48"><rect x="7" y="12" width="26" height="20" rx="3" fill="none" stroke="#5C8CE0" stroke-width="3" transform="rotate(-6 20 22)"/><rect x="14" y="14" width="26" height="20" rx="3" fill="none" stroke="#5C8CE0" stroke-width="3"/></svg>
+        <h2>Flashcards</h2>
+        <p>Flip through key vocabulary — atoms, changes, alloys, pH, and more.</p>
+        <span class="tag cards">18 terms</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('ph')">
+        <svg class="icon" viewBox="0 0 48 48"><path d="M24 6c-7 8-11 14-11 19a11 11 0 0 0 22 0c0-5-4-11-11-19z" fill="none" stroke="#7FC1D9" stroke-width="3"/><path d="M17 27h14" stroke="#7FC1D9" stroke-width="3" stroke-linecap="round"/></svg>
+        <h2>pH Detective</h2>
+        <p>Read the example — is it an acid or a base?</p>
+        <span class="tag ph">16 examples</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('mix')">
+        <svg class="icon" viewBox="0 0 48 48"><circle cx="16" cy="18" r="8" fill="none" stroke="#B08CE0" stroke-width="3"/><circle cx="30" cy="16" r="6" fill="none" stroke="#B08CE0" stroke-width="3"/><circle cx="24" cy="32" r="7" fill="none" stroke="#B08CE0" stroke-width="3"/></svg>
+        <h2>Mix It Up</h2>
+        <p>Solution, colloid, or suspension — you decide.</p>
+        <span class="tag mix">15 examples</span>
+      </button>
+
+      <button class="activity-card" onclick="goTo('metals')">
+        <svg class="icon" viewBox="0 0 48 48"><circle cx="24" cy="24" r="4" fill="#E8A93B"/><ellipse cx="24" cy="24" rx="19" ry="8" fill="none" stroke="#E8A93B" stroke-width="3"/><ellipse cx="24" cy="24" rx="19" ry="8" fill="none" stroke="#E8A93B" stroke-width="3" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="19" ry="8" fill="none" stroke="#E8A93B" stroke-width="3" transform="rotate(120 24 24)"/></svg>
+        <h2>Metal Match</h2>
+        <p>Metal, nonmetal, or metalloid? Classify each element.</p>
+        <span class="tag metals">17 examples</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- QUIZ SHOW -->
+  <main id="quiz-screen">
+    <button class="back-btn" onclick="goTo('home')">← Back</button>
+    <div class="panel">
+      <div id="quiz-live">
+        <div class="progress-row">
+          <span id="quiz-progress">Question 1 of 17</span>
+          <span class="score-pill" id="quiz-score">Score: 0</span>
+        </div>
+        <h3 id="quiz-question"></h3>
+        <div class="choice-list" id="quiz-choices"></div>
+        <div class="feedback" id="quiz-feedback"></div>
+        <button class="next-btn" id="quiz-next" onclick="nextQuizQuestion()">Next question →</button>
+      </div>
+      <div id="quiz-end" class="end-screen" style="display:none">
+        <div class="hand" id="quiz-end-title">Nice work!</div>
+        <p id="quiz-end-text"></p>
+        <button class="primary-btn show" onclick="startQuiz()">Play again</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- SORT LAB -->
+  <main id="sort-screen">
+    <button class="back-btn" onclick="goTo('home')">← Back</button>
+    <div class="panel">
+      <div class="progress-row">
+        <span>Tap a substance, then tap the bin it belongs in.</span>
+        <span class="score-pill" id="sort-score">0 / 8</span>
+      </div>
+      <div class="bins">
+        <div class="bin element" data-bin="Element"><h3>Element</h3><div class="bin-items" id="bin-element"></div></div>
+        <div class="bin compound" data-bin="Compound"><h3>Compound</h3><div class="bin-items" id="bin-compound"></div></div>
+        <div class="bin mixture" data-bin="Mixture"><h3>Mixture</h3><div class="bin-items" id="bin-mixture"></div></div>
+      </div>
+      <div class="item-tray" id="sort-tray"></div>
+      <p class="hint-text" id="sort-hint">&nbsp;</p>
+      <div style="text-align:center">
+        <button class="primary-btn" id="sort-reset" onclick="startSort()">Reset lab</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- BLITZ -->
+  <main id="blitz-screen">
+    <button class="back-btn" onclick="goTo('home')">← Back</button>
+    <div class="panel">
+      <div id="blitz-live">
+        <div class="progress-row">
+          <span id="blitz-progress">Statement 1 of 16</span>
+          <span class="score-pill" id="blitz-score">Score: 0</span>
+        </div>
+        <div class="blitz-bar-wrap"><div class="blitz-bar" id="blitz-bar"></div></div>
+        <div id="blitz-statement"></div>
+        <div class="tf-buttons">
+          <button class="tf-btn true-btn" onclick="answerBlitz(true)">TRUE</button>
+          <button class="tf-btn false-btn" onclick="answerBlitz(false)">FALSE</button>
+        </div>
+        <div class="feedback" id="blitz-feedback"></div>
+      </div>
+      <div id="blitz-end" class="end-screen" style="display:none">
+        <div class="hand">Round complete!</div>
+        <p id="blitz-end-text"></p>
+        <button class="primary-btn show" onclick="startBlitz()">Run it again</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- CLASSIFY GAMES: pH Detective / Mix It Up / Metal Match -->
+  <main id="classify-screen">
+    <button class="back-btn" onclick="goTo('home')">← Back</button>
+    <div class="panel">
+      <div id="classify-live">
+        <div class="progress-row">
+          <span id="classify-progress">Item 1 of 16</span>
+          <span class="score-pill" id="classify-score">Score: 0</span>
+        </div>
+        <h2 id="classify-title" style="margin-top:0"></h2>
+        <div class="classify-card">
+          <div class="classify-emoji" id="classify-item-emoji"></div>
+          <div class="classify-label" id="classify-item-label"></div>
+          <div class="classify-clue" id="classify-item-clue"></div>
+        </div>
+        <div class="cat-row" id="classify-cat-row"></div>
+        <div class="feedback" id="classify-feedback"></div>
+        <button class="next-btn" id="classify-next" onclick="nextClassifyItem()">Next →</button>
+      </div>
+      <div id="classify-end" class="end-screen" style="display:none">
+        <div class="hand" id="classify-end-title">Nice work!</div>
+        <p id="classify-end-text"></p>
+        <button class="primary-btn show" onclick="startClassify(currentGameKey)">Play again</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- FLASHCARDS -->
+  <main id="cards-screen">
+    <button class="back-btn" onclick="goTo('home')">← Back</button>
+    <div class="panel flash-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="flashcard-inner">
+          <div class="flashcard-face flashcard-front"><span class="hand" id="flash-term"></span></div>
+          <div class="flashcard-face flashcard-back"><span id="flash-def"></span></div>
+        </div>
+      </div>
+      <div class="flash-controls">
+        <button onclick="prevCard()">← Prev</button>
+        <button onclick="shuffleCards()">🔀 Shuffle</button>
+        <button onclick="nextCard()">Next →</button>
+      </div>
+      <div class="flash-counter" id="flash-counter"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- NAVIGATION ---------- */
+const classifyGameKeys = ['ph', 'mix', 'metals'];
+
+function goTo(screen){
+  document.querySelectorAll('main').forEach(m => m.classList.remove('active'));
+  const isClassify = classifyGameKeys.includes(screen);
+  document.getElementById(screen === 'home' ? 'home-screen' : (isClassify ? 'classify-screen' : screen + '-screen')).classList.add('active');
+  if(screen === 'quiz') startQuiz();
+  if(screen === 'sort') startSort();
+  if(screen === 'blitz') startBlitz();
+  if(screen === 'cards') startCards();
+  if(isClassify) startClassify(screen);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ---------- QUIZ SHOW ---------- */
+const quizBank = [
+  {q:"To be classified as \"matter,\" a substance must meet which two requirements?", a:["Have mass and take up space (volume)","Be visible and have a solid shape","Conduct heat and electricity","Be a pure element on the periodic table"], correct:0},
+  {q:"A scientist measures the temperature at which a sample of gallium melts into a liquid. This is an example of observing a...", a:["Physical property, without changing the element's makeup","Chemical property, by forming a new substance","Density change caused by a reaction","Nuclear property of the element"], correct:0},
+  {q:"Which of these substances is NOT an element found on the periodic table?", a:["Gold","Table Salt","Iron","Oxygen"], correct:1},
+  {q:"Liquid A has a pH of 2, and Liquid B has a pH of 5. Which statement is correct?", a:["Liquid A is more acidic than Liquid B","Liquid B is more acidic than Liquid A","Both liquids are basic","Liquid A is a base and Liquid B is an acid"], correct:0},
+  {q:"Looking at this pH table — Bleach: 13, Soap: 10, Milk: 6, Lemon Juice: 2 — which item is the strongest BASE?", a:["Soap","Milk","Bleach","Lemon Juice"], correct:2},
+  {q:"A 1 cm³ cube of gold feels much heavier than a 1 cm³ cube of aluminum because gold has...", a:["A higher density","More malleability","A larger volume","Better conductivity"], correct:0},
+  {q:"An engineer hammers a block of copper into a flat, thin sheet without it cracking. This shows that copper is...", a:["Ductile","Malleable","An insulator","An alloy"], correct:1},
+  {q:"The engineer pulls aluminum through a machine to stretch it into long, thin electrical wires. This shows that aluminum is...", a:["Malleable","Brittle","Ductile","A metalloid"], correct:2},
+  {q:"To make a stronger, rust-resistant material, the engineer melts copper and tin together to form bronze. Bronze is a type of...", a:["Compound","Alloy","Element","Acid"], correct:1},
+  {q:"Which is a typical property of a non-metal?", a:["High electrical conductivity","Shiny, metallic luster","Poor conductor of heat","Highly ductile"], correct:2},
+  {q:"What makes metalloids unique compared to metals and non-metals?", a:["They cannot react with other elements","They are always gases at room temperature","They have properties of both metals and non-metals","They are the only substances with mass"], correct:2},
+  {q:"If you mix salt and pepper together in a bowl, why is this a mixture and not a compound?", a:["They can be physically separated and are not chemically bonded","They are both solids","A brand-new substance was formed","The salt dissolves the pepper"], correct:0},
+  {q:"A white solid sample can be separated by dissolving it in water and then evaporating the water. This sample is most likely a...", a:["Compound","Element","Mixture","Acid"], correct:2},
+  {q:"A water molecule is one oxygen atom chemically bonded to two hydrogen atoms. Why is water a compound and not an element?", a:["It contains two different types of atoms chemically bonded", "It can exist as a solid, liquid, or gas","It is a transparent liquid","It can be separated by simple filtration"], correct:0},
+  {q:"A flashlight beam is invisible passing through Liquid X, but clearly visible passing through Liquid Y. What's the best classification?", a:["Liquid X is a solution; Liquid Y is a colloid","Liquid X is a mixture; Liquid Y is a pure substance","Liquid X is a base; Liquid Y is an acid","Liquid X is an element; Liquid Y is a compound"], correct:0},
+  {q:"Which of the following is an example of a physical change?", a:["A piece of wood burning in a fireplace","An ice cube melting into liquid water","An iron nail rusting","Baking a cake in the oven"], correct:1},
+  {q:"A graph shows ice staying at 0°C for several minutes while it melts. What does this tell you?", a:["A chemical change is occurring","The mass of the ice is disappearing","A physical change is occurring as the substance changes state","The reaction has completely stopped"], correct:2},
+  {q:"CER: A 10g iron nail rusts outdoors and now weighs 14g and looks orange-brown. Which evidence best supports \"rusting is a chemical change\"?", a:["The nail was outside for two weeks","The iron changed into a new orange-brown substance with different properties","The nail became heavier because it got wet","The nail can be cleaned with sandpaper"], correct:1},
+  {q:"5g of baking soda reacts with 20g of vinegar inside a 25g sealed bag. Based on the Law of Conservation of Mass, what happens to the total mass?", a:["It decreases because the gas weighs less than a liquid","It increases because the gas takes up more space","It stays constant — a closed system means no atoms are created or destroyed","It stays constant because it was only a physical change"], correct:2}
+];
+
+let quizOrder = [], quizIndex = 0, quizScore = 0, quizAnswered = false;
+
+function startQuiz(){
+  quizOrder = shuffle(quizBank);
+  quizIndex = 0; quizScore = 0;
+  document.getElementById('quiz-live').style.display = 'block';
+  document.getElementById('quiz-end').style.display = 'none';
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  quizAnswered = false;
+  const item = quizOrder[quizIndex];
+  const choiceObjs = item.a.map((text, i) => ({text, correct: i === item.correct}));
+  const shuffled = shuffle(choiceObjs);
+
+  document.getElementById('quiz-progress').textContent = `Question ${quizIndex+1} of ${quizOrder.length}`;
+  document.getElementById('quiz-score').textContent = `Score: ${quizScore}`;
+  document.getElementById('quiz-question').textContent = item.q;
+
+  const list = document.getElementById('quiz-choices');
+  list.innerHTML = '';
+  shuffled.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.dataset.isCorrect = c.correct ? 'true' : 'false';
+    btn.onclick = () => selectQuizAnswer(btn, c.correct, list);
+    list.appendChild(btn);
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('quiz-next').classList.remove('show');
+}
+
+function selectQuizAnswer(btn, isCorrect, list){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  list.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById('quiz-feedback');
+  if(isCorrect){
+    btn.classList.add('correct');
+    quizScore++;
+    fb.className = 'feedback show good';
+    fb.textContent = "✔ Correct!";
+  } else {
+    btn.classList.add('incorrect');
+    fb.className = 'feedback show bad';
+    fb.textContent = "✘ Not quite — the correct answer is highlighted below.";
+  }
+  document.getElementById('quiz-score').textContent = `Score: ${quizScore}`;
+  document.getElementById('quiz-next').classList.add('show');
+  Array.from(list.children).forEach(b => {
+    if(b.dataset.isCorrect === 'true') b.classList.add('correct');
+  });
+}
+
+function nextQuizQuestion(){
+  quizIndex++;
+  if(quizIndex >= quizOrder.length){
+    document.getElementById('quiz-live').style.display = 'none';
+    document.getElementById('quiz-end').style.display = 'block';
+    const pct = Math.round((quizScore/quizOrder.length)*100);
+    let title = "Nice work!";
+    if(pct === 100) title = "Perfect score! 🎉";
+    else if(pct >= 80) title = "Great job!";
+    else if(pct < 50) title = "Good start — try again!";
+    document.getElementById('quiz-end-title').textContent = title;
+    document.getElementById('quiz-end-text').textContent = `You scored ${quizScore} out of ${quizOrder.length}.`;
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+/* ---------- SORT LAB ---------- */
+const sortItems = [
+  {name:"Gold", bin:"Element"},
+  {name:"Oxygen gas", bin:"Element"},
+  {name:"Iron (before rusting)", bin:"Element"},
+  {name:"Water (H₂O)", bin:"Compound"},
+  {name:"Table Salt (NaCl)", bin:"Compound"},
+  {name:"Bronze (copper + tin)", bin:"Mixture"},
+  {name:"Salt & Pepper", bin:"Mixture"},
+  {name:"White solid separated by dissolving + evaporating", bin:"Mixture"}
+];
+let sortState = [], sortCorrectCount = 0, selectedChip = null;
+
+function startSort(){
+  sortState = shuffle(sortItems).map(i => ({...i, placed:false}));
+  sortCorrectCount = 0; selectedChip = null;
+  document.getElementById('sort-score').textContent = `0 / ${sortState.length}`;
+  document.getElementById('sort-hint').textContent = '\u00A0';
+  ['bin-element','bin-compound','bin-mixture'].forEach(id => document.getElementById(id).innerHTML = '');
+  renderSortTray();
+}
+
+function renderSortTray(){
+  const tray = document.getElementById('sort-tray');
+  tray.innerHTML = '';
+  sortState.forEach((item, idx) => {
+    if(item.placed) return;
+    const chip = document.createElement('button');
+    chip.className = 'sort-item';
+    chip.textContent = item.name;
+    chip.onclick = () => {
+      document.querySelectorAll('.sort-item').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedChip = idx;
+    };
+    tray.appendChild(chip);
+  });
+}
+
+document.querySelectorAll('.bin').forEach(bin => {
+  bin.addEventListener('click', () => {
+    if(selectedChip === null) {
+      document.getElementById('sort-hint').textContent = "Tap a substance below first, then tap a bin.";
+      return;
+    }
+    const item = sortState[selectedChip];
+    const binName = bin.dataset.bin;
+    const hint = document.getElementById('sort-hint');
+    if(item.bin === binName){
+      item.placed = true;
+      sortCorrectCount++;
+      const chipEl = document.createElement('span');
+      chipEl.className = 'bin-chip';
+      chipEl.textContent = item.name;
+      bin.querySelector('.bin-items').appendChild(chipEl);
+      hint.textContent = `✔ Correct — ${item.name} is a${/^[aeiou]/i.test(binName) ? 'n' : ''} ${binName.toLowerCase()}.`;
+      document.getElementById('sort-score').textContent = `${sortCorrectCount} / ${sortState.length}`;
+      renderSortTray();
+      selectedChip = null;
+      if(sortCorrectCount === sortState.length){
+        hint.textContent = "🎉 All sorted correctly! Tap Reset lab to try again.";
+      }
+    } else {
+      hint.textContent = `Not quite — ${item.name} doesn't belong in ${binName}. Try another bin.`;
+    }
+  });
+});
+
+/* ---------- BLITZ ---------- */
+const blitzBank = [
+  {s:"Table salt is a compound, not an element.", t:true},
+  {s:"Gold is an element found on the periodic table.", t:true},
+  {s:"Mixing salt and pepper in a bowl creates a compound.", t:false},
+  {s:"A mixture can be separated using physical methods.", t:true},
+  {s:"An ice cube melting is a chemical change.", t:false},
+  {s:"Rust forming on an iron nail is a chemical change.", t:true},
+  {s:"In a closed system, the total mass stays the same during a chemical reaction.", t:true},
+  {s:"A liquid with a pH of 2 is more acidic than one with a pH of 5.", t:true},
+  {s:"Bleach at pH 13 is the strongest ACID in a household pH table.", t:false},
+  {s:"Malleable means a metal can be pulled into thin wires.", t:false},
+  {s:"Metalloids have properties of both metals and non-metals.", t:true},
+  {s:"Non-metals are typically excellent conductors of electricity.", t:false},
+  {s:"Bronze, a mix of copper and tin, is an example of an alloy.", t:true},
+  {s:"A colloid scatters a light beam, but a true solution does not.", t:true},
+  {s:"A 1 cm³ gold cube feels heavier than a 1 cm³ aluminum cube because gold has higher density.", t:true},
+  {s:"To be classified as matter, a substance only needs to be visible.", t:false}
+];
+
+let blitzOrder = [], blitzIndex = 0, blitzScore = 0, blitzTimer = null, blitzTimeLeft = 0, blitzAnswered = false;
+const BLITZ_SECONDS = 6;
+
+function startBlitz(){
+  blitzOrder = shuffle(blitzBank);
+  blitzIndex = 0; blitzScore = 0;
+  document.getElementById('blitz-live').style.display = 'block';
+  document.getElementById('blitz-end').style.display = 'none';
+  renderBlitzStatement();
+}
+
+function renderBlitzStatement(){
+  blitzAnswered = false;
+  const item = blitzOrder[blitzIndex];
+  document.getElementById('blitz-progress').textContent = `Statement ${blitzIndex+1} of ${blitzOrder.length}`;
+  document.getElementById('blitz-score').textContent = `Score: ${blitzScore}`;
+  document.getElementById('blitz-statement').textContent = item.s;
+  const fb = document.getElementById('blitz-feedback');
+  fb.className = 'feedback'; fb.textContent = '';
+  document.querySelectorAll('.tf-btn').forEach(b => b.disabled = false);
+
+  blitzTimeLeft = BLITZ_SECONDS * 10;
+  updateBlitzBar();
+  clearInterval(blitzTimer);
+  blitzTimer = setInterval(() => {
+    blitzTimeLeft--;
+    updateBlitzBar();
+    if(blitzTimeLeft <= 0){
+      clearInterval(blitzTimer);
+      if(!blitzAnswered) answerBlitz(null);
+    }
+  }, 100);
+}
+
+function updateBlitzBar(){
+  const pct = Math.max(0, (blitzTimeLeft / (BLITZ_SECONDS*10)) * 100);
+  document.getElementById('blitz-bar').style.width = pct + '%';
+}
+
+function answerBlitz(choice){
+  if(blitzAnswered) return;
+  blitzAnswered = true;
+  clearInterval(blitzTimer);
+  document.querySelectorAll('.tf-btn').forEach(b => b.disabled = true);
+  const item = blitzOrder[blitzIndex];
+  const fb = document.getElementById('blitz-feedback');
+  if(choice === item.t){
+    blitzScore++;
+    fb.className = 'feedback show good';
+    fb.textContent = "✔ Correct!";
+  } else if(choice === null){
+    fb.className = 'feedback show bad';
+    fb.textContent = `⏱ Time's up! The answer was ${item.t ? 'TRUE' : 'FALSE'}.`;
+  } else {
+    fb.className = 'feedback show bad';
+    fb.textContent = `✘ Actually ${item.t ? 'TRUE' : 'FALSE'}.`;
+  }
+  document.getElementById('blitz-score').textContent = `Score: ${blitzScore}`;
+  setTimeout(() => {
+    blitzIndex++;
+    if(blitzIndex >= blitzOrder.length){
+      document.getElementById('blitz-live').style.display = 'none';
+      document.getElementById('blitz-end').style.display = 'block';
+      document.getElementById('blitz-end-text').textContent = `You scored ${blitzScore} out of ${blitzOrder.length}.`;
+    } else {
+      renderBlitzStatement();
+    }
+  }, 1200);
+}
+
+/* ---------- FLASHCARDS ---------- */
+const flashBank = [
+  {term:"Atom", def:"The smallest unit of an element that still has that element's properties."},
+  {term:"Element", def:"A pure substance made of only one type of atom. It cannot be broken down into simpler substances."},
+  {term:"Compound", def:"Two or more different elements chemically bonded together (e.g., water = H₂O)."},
+  {term:"Mixture", def:"Two or more substances combined but not chemically bonded — they can be separated by physical means, like salt and pepper."},
+  {term:"Matter", def:"Anything that has mass and takes up space (volume)."},
+  {term:"Physical Property", def:"A characteristic you can observe or measure without changing what the substance is — like melting point or color."},
+  {term:"Chemical Property", def:"Describes how a substance reacts to form a new substance — like flammability or reacting with acid."},
+  {term:"Physical Change", def:"A change in form or state where no new substance is formed — like ice melting into water."},
+  {term:"Chemical Change", def:"A change that produces a brand-new substance with different properties — like rusting or burning."},
+  {term:"Density", def:"How much mass is packed into a given volume. It's why a gold cube feels heavier than an aluminum cube of the same size."},
+  {term:"pH Scale", def:"Measures how acidic or basic a substance is. Lower numbers = more acidic, higher numbers = more basic."},
+  {term:"Malleable", def:"Can be hammered or pressed into thin sheets without cracking — a property of metals, like copper."},
+  {term:"Ductile", def:"Can be pulled or stretched into thin wires — a property of metals, like aluminum."},
+  {term:"Conductivity", def:"How well a material transfers heat or electric current."},
+  {term:"Alloy", def:"A mixture of two or more metals melted together — like bronze, made from copper and tin."},
+  {term:"Metalloid", def:"An element with properties of BOTH metals and non-metals."},
+  {term:"Solution vs. Colloid", def:"In a solution, a light beam passes through invisibly. In a colloid, the beam scatters and becomes visible."},
+  {term:"Law of Conservation of Mass", def:"In a closed system, mass stays the same during a reaction — atoms rearrange, but none are created or destroyed."}
+];
+let flashOrder = [], flashIndex = 0;
+
+function startCards(){
+  flashOrder = flashBank.map((c,i) => i);
+  flashIndex = 0;
+  renderCard();
+}
+function renderCard(){
+  const card = document.getElementById('flashcard');
+  card.classList.remove('flipped');
+  const item = flashBank[flashOrder[flashIndex]];
+  document.getElementById('flash-term').textContent = item.term;
+  document.getElementById('flash-def').textContent = item.def;
+  document.getElementById('flash-counter').textContent = `Card ${flashIndex+1} of ${flashOrder.length}`;
+}
+function flipCard(){ document.getElementById('flashcard').classList.toggle('flipped'); }
+function nextCard(){ flashIndex = (flashIndex+1) % flashOrder.length; renderCard(); }
+function prevCard(){ flashIndex = (flashIndex-1+flashOrder.length) % flashOrder.length; renderCard(); }
+function shuffleCards(){ flashOrder = shuffle(flashOrder); flashIndex = 0; renderCard(); }
+
+/* ---------- CLASSIFY GAMES (pH Detective / Mix It Up / Metal Match) ---------- */
+const classifyGames = {
+  ph: {
+    title: "pH Detective — Acid or Base?",
+    categories: ["Acid", "Base"],
+    items: [
+      {label:"Lemon Juice", emoji:"🍋", clue:"~pH 2 — sour, used in lemonade", answer:"Acid"},
+      {label:"Stomach Acid", emoji:"🤢", clue:"~pH 1.5 — helps digest food", answer:"Acid"},
+      {label:"Vinegar", emoji:"🍶", clue:"~pH 3 — used in salad dressing", answer:"Acid"},
+      {label:"Soda Pop", emoji:"🥤", clue:"~pH 3 — fizzy soft drink", answer:"Acid"},
+      {label:"Black Coffee", emoji:"☕", clue:"~pH 5 — morning drink", answer:"Acid"},
+      {label:"Tomato Juice", emoji:"🍅", clue:"~pH 4 — tangy red juice", answer:"Acid"},
+      {label:"Orange Juice", emoji:"🍊", clue:"~pH 3.5 — citrus breakfast drink", answer:"Acid"},
+      {label:"Battery Acid", emoji:"🔋", clue:"~pH 1 — found in car batteries", answer:"Acid"},
+      {label:"Baking Soda", emoji:"🧁", clue:"~pH 9 — used in baking", answer:"Base"},
+      {label:"Hand Soap", emoji:"🧼", clue:"~pH 10 — used for washing hands", answer:"Base"},
+      {label:"Bleach", emoji:"🪣", clue:"~pH 13 — used for cleaning and whitening", answer:"Base"},
+      {label:"Ammonia", emoji:"🧴", clue:"~pH 11 — strong-smelling cleaner", answer:"Base"},
+      {label:"Milk of Magnesia", emoji:"💊", clue:"~pH 10 — used to settle an upset stomach", answer:"Base"},
+      {label:"Drain Cleaner", emoji:"🪠", clue:"~pH 14 — unclogs pipes", answer:"Base"},
+      {label:"Egg Whites", emoji:"🥚", clue:"~pH 8 — part of a raw egg", answer:"Base"},
+      {label:"Sea Water", emoji:"🌊", clue:"~pH 8 — ocean water", answer:"Base"}
+    ]
+  },
+  mix: {
+    title: "Mix It Up — Solution, Colloid, or Suspension?",
+    categories: ["Solution", "Colloid", "Suspension"],
+    items: [
+      {label:"Salt Water", emoji:"🧂", clue:"The salt dissolves completely and the water stays clear", answer:"Solution"},
+      {label:"Sweet Tea", emoji:"🍵", clue:"Sugar disappears completely once it's stirred in", answer:"Solution"},
+      {label:"Air", emoji:"💨", clue:"A blend of gases — nothing settles out or separates", answer:"Solution"},
+      {label:"Vinegar", emoji:"🍶", clue:"Water and acetic acid mixed evenly together", answer:"Solution"},
+      {label:"Soda Water", emoji:"🫧", clue:"Carbon dioxide gas dissolved in water", answer:"Solution"},
+      {label:"Milk", emoji:"🥛", clue:"Looks cloudy and scatters a flashlight beam, but never settles", answer:"Colloid"},
+      {label:"Whipped Cream", emoji:"🍨", clue:"Tiny air bubbles spread through cream — it won't separate", answer:"Colloid"},
+      {label:"Fog", emoji:"🌫️", clue:"Tiny water droplets suspended in air, scattering light", answer:"Colloid"},
+      {label:"Mayonnaise", emoji:"🥪", clue:"Oil droplets spread through egg and vinegar", answer:"Colloid"},
+      {label:"Gelatin (Jello)", emoji:"🍮", clue:"Liquid trapped inside a wobbly, solid-like network", answer:"Colloid"},
+      {label:"Muddy River Water", emoji:"🏞️", clue:"Dirt particles settle to the bottom if left still", answer:"Suspension"},
+      {label:"Italian Salad Dressing", emoji:"🥗", clue:"Oil and vinegar separate into layers if you stop shaking", answer:"Suspension"},
+      {label:"Flour Stirred in Water", emoji:"🌾", clue:"Cloudy at first, but the flour settles out over time", answer:"Suspension"},
+      {label:"Sand Mixed in Water", emoji:"🏖️", clue:"The sand sinks to the bottom", answer:"Suspension"},
+      {label:"Fresh-Squeezed Orange Juice", emoji:"🧃", clue:"The pulp settles at the bottom of the glass", answer:"Suspension"}
+    ]
+  },
+  metals: {
+    title: "Metal Match — Metal, Nonmetal, or Metalloid?",
+    categories: ["Metal", "Nonmetal", "Metalloid"],
+    items: [
+      {label:"Gold", emoji:"🥇", clue:"Shiny, soft, used in jewelry", answer:"Metal"},
+      {label:"Iron", emoji:"⚙️", clue:"Main ingredient in steel", answer:"Metal"},
+      {label:"Copper", emoji:"🔌", clue:"Used in electrical wiring", answer:"Metal"},
+      {label:"Aluminum", emoji:"🥫", clue:"Light metal used in soda cans", answer:"Metal"},
+      {label:"Sodium", emoji:"🧪", clue:"Reacts violently with water", answer:"Metal"},
+      {label:"Silver", emoji:"🥈", clue:"Highly conductive — used in coins and jewelry", answer:"Metal"},
+      {label:"Oxygen", emoji:"🫁", clue:"The gas we need to breathe", answer:"Nonmetal"},
+      {label:"Nitrogen", emoji:"🌍", clue:"Makes up most of Earth's atmosphere", answer:"Nonmetal"},
+      {label:"Carbon", emoji:"💎", clue:"Found in charcoal and diamonds", answer:"Nonmetal"},
+      {label:"Helium", emoji:"🎈", clue:"Light gas used to fill balloons", answer:"Nonmetal"},
+      {label:"Chlorine", emoji:"🏊", clue:"Used to disinfect swimming pools", answer:"Nonmetal"},
+      {label:"Sulfur", emoji:"🟡", clue:"Yellow solid with a rotten-egg smell", answer:"Nonmetal"},
+      {label:"Silicon", emoji:"💻", clue:"Used to make computer chips", answer:"Metalloid"},
+      {label:"Boron", emoji:"🪟", clue:"Used in glass and ceramics", answer:"Metalloid"},
+      {label:"Germanium", emoji:"📡", clue:"Used in semiconductors", answer:"Metalloid"},
+      {label:"Arsenic", emoji:"☠️", clue:"Brittle and somewhat shiny — historically used in pesticides", answer:"Metalloid"},
+      {label:"Antimony", emoji:"🛡️", clue:"Used to strengthen other metals in alloys", answer:"Metalloid"}
+    ]
+  }
+};
+
+let currentGameKey = null, classifyOrder = [], classifyIndex = 0, classifyScore = 0, classifyAnswered = false;
+
+function startClassify(key){
+  currentGameKey = key;
+  const game = classifyGames[key];
+  classifyOrder = shuffle(game.items);
+  classifyIndex = 0; classifyScore = 0;
+  document.getElementById('classify-live').style.display = 'block';
+  document.getElementById('classify-end').style.display = 'none';
+  document.getElementById('classify-title').textContent = game.title;
+  renderClassifyItem();
+}
+
+function renderClassifyItem(){
+  classifyAnswered = false;
+  const game = classifyGames[currentGameKey];
+  const item = classifyOrder[classifyIndex];
+
+  document.getElementById('classify-progress').textContent = `Item ${classifyIndex+1} of ${classifyOrder.length}`;
+  document.getElementById('classify-score').textContent = `Score: ${classifyScore}`;
+  document.getElementById('classify-item-emoji').textContent = item.emoji;
+  document.getElementById('classify-item-label').textContent = item.label;
+  document.getElementById('classify-item-clue').textContent = item.clue;
+
+  const row = document.getElementById('classify-cat-row');
+  row.innerHTML = '';
+  game.categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = cat;
+    btn.dataset.isCorrect = (cat === item.answer) ? 'true' : 'false';
+    btn.onclick = () => answerClassify(btn, cat === item.answer, row);
+    row.appendChild(btn);
+  });
+
+  const fb = document.getElementById('classify-feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('classify-next').classList.remove('show');
+}
+
+function answerClassify(btn, isCorrect, row){
+  if(classifyAnswered) return;
+  classifyAnswered = true;
+  row.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  const item = classifyOrder[classifyIndex];
+  const fb = document.getElementById('classify-feedback');
+  if(isCorrect){
+    btn.classList.add('correct');
+    classifyScore++;
+    fb.className = 'feedback show good';
+    fb.textContent = `✔ Correct! ${item.label} is ${/^[aeiou]/i.test(item.answer) ? 'an' : 'a'} ${item.answer.toLowerCase()}.`;
+  } else {
+    btn.classList.add('incorrect');
+    fb.className = 'feedback show bad';
+    fb.textContent = `✘ Actually, ${item.label} is ${/^[aeiou]/i.test(item.answer) ? 'an' : 'a'} ${item.answer.toLowerCase()}.`;
+  }
+  document.getElementById('classify-score').textContent = `Score: ${classifyScore}`;
+  document.getElementById('classify-next').classList.add('show');
+  Array.from(row.children).forEach(b => {
+    if(b.dataset.isCorrect === 'true') b.classList.add('correct');
+  });
+}
+
+function nextClassifyItem(){
+  classifyIndex++;
+  if(classifyIndex >= classifyOrder.length){
+    document.getElementById('classify-live').style.display = 'none';
+    document.getElementById('classify-end').style.display = 'block';
+    const pct = Math.round((classifyScore/classifyOrder.length)*100);
+    let title = "Nice work!";
+    if(pct === 100) title = "Perfect score! 🎉";
+    else if(pct >= 80) title = "Great job!";
+    else if(pct < 50) title = "Good start — try again!";
+    document.getElementById('classify-end-title').textContent = title;
+    document.getElementById('classify-end-text').textContent = `You scored ${classifyScore} out of ${classifyOrder.length}.`;
+  } else {
+    renderClassifyItem();
+  }
+}
+</script>
+</body>
+</html>
